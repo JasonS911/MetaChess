@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bababebc596a0b40bbfa690eb29b9b4, type: 3}
+  m_Name: BishopReplacements
+  m_EditorClassIdentifier: 
+  pieceType: 2
+  replacementOptions:
+  - displayName: Bishop
+    blackSprite: {fileID: 21300000, guid: befa4e18f5f6cc442bed02f9e2946ecf, type: 3}
+    whiteSprite: {fileID: 21300000, guid: b57e0a00cac85874295f16fc2b03db18, type: 3}
+    resultingType: 2
+  - displayName: Ninja
+    blackSprite: {fileID: 21300000, guid: 1e7853a0d8dfd124ba16c1024dc3127e, type: 3}
+    whiteSprite: {fileID: 21300000, guid: 4ff19aa4394ee0e47a3cf0c2d54463c1, type: 3}
+    resultingType: 9

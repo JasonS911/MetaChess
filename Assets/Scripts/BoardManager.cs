@@ -1,9 +1,18 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using TMPro;
+using UnityEditor.Overlays;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BoardManager : MonoBehaviour
 {
+    public Transform tileContainerTransform;
+    public Transform pieceContainerTransform;
+    public Transform highlightContainerTransform;
+
+
     public GameObject tilePrefab;
     public GameObject piecePrefab;
 
@@ -19,6 +28,10 @@ public class BoardManager : MonoBehaviour
     public Sprite MetaChess_Queen_Black;
     public Sprite MetaChess_King;
     public Sprite MetaChess_King_Black;
+    public Sprite MetaChess_Scout;
+    public Sprite MetaChess_Scout_Black;
+
+
 
     public int rows = 8, cols = 8;
     public float tileSize = 1f;
@@ -27,108 +40,186 @@ public class BoardManager : MonoBehaviour
     public static Piece[,] boardState = new Piece[8, 8];
 
     public static Vector2Int? enPassantTargetSquare = null;
+    public GameOverUI gameOverUI;
 
     void Awake()
     {
         Instance = this;
-    }
 
-    void Start()
+    }
+    public float whiteTimeRemaining;
+    public float blackTimeRemaining;
+    private bool gameStarted = false;
+
+    IEnumerator Start()
     {
-        GenerateBoard();
+
+        GenerateTiles();
+
+        // Wait 1 frame so GridLayoutGroup lays out tiles
+        yield return null;
+
+        GeneratePieces();
+        float startingTime = GameManager.Instance.selectedTimeMinutes * 60f;
+        gameStarted = true;
+
+        SoundManager.Instance.PlayGameStartSound();
+        whiteTimeRemaining = startingTime;
+        blackTimeRemaining = startingTime;
+    }
+    void GenerateTiles()
+    {
+        foreach (Transform child in tileContainerTransform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        for (int x = 0; x < cols; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                GameObject tile = Instantiate(tilePrefab, tileContainerTransform);
+                Tile tileScript = tile.GetComponent<Tile>();
+                tileScript.gridPosition = new Vector2Int(x, y);
+
+                bool isLight = (x + y) % 2 == 0;
+                tileScript.SetColor(isLight ? new Color32(235, 236, 208, 255) : new Color32(115, 149, 82, 255));
+            }
+        }
     }
 
-    void GenerateBoard()
+    void GeneratePieces()
     {
         for (int x = 0; x < cols; x++)
         {
             for (int y = 0; y < rows; y++)
             {
-                Vector3 pos = new Vector3(x * tileSize, y * tileSize, 0);
-                GameObject tile = Instantiate(tilePrefab, pos, Quaternion.identity);
-                tile.transform.SetParent(transform);
-
-                Tile tileScript = tile.GetComponent<Tile>();
-                tileScript.gridPosition = new Vector2Int(x, y);
-
-                bool isLight = (x + y) % 2 == 0;
-                tileScript.SetColor(isLight ? Color.white : Color.gray);
-
-                //Create pawns
+                // Pawns
                 if (y == 1 || y == 6)
                 {
-                    GameObject pawn = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = pawn.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = pawn.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 1); //if y is 1, it is white; if y is 6, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_Pawn : MetaChess_Pawn_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.Pawn; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                    CreatePiece(x, y, PieceType.Pawn, y == 1);
                 }
-                //create end pieces (standard is rook)
+
+                // Rooks
                 if ((x == 0 || x == 7) && (y == 0 || y == 7))
-                {   
-                    GameObject rook = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = rook.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = rook.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 0); //if y is 0, it is white; if y is 7, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_Rook : MetaChess_Rook_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.Rook; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                {
+                    CreatePiece(x, y, PieceType.Rook, y == 0);
                 }
-                //create second end pieces (standard is knight)
+
+                // Knights
                 if ((x == 1 || x == 6) && (y == 0 || y == 7))
                 {
-                    GameObject knight = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = knight.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = knight.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 0); //if y is 0, it is white; if y is 7, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_Knight : MetaChess_Knight_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.Knight; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                    CreatePiece(x, y, PieceType.Knight, y == 0);
                 }
-                //create third end pieces (standard is bishop)
+
+                // Bishops
                 if ((x == 2 || x == 5) && (y == 0 || y == 7))
                 {
-                    GameObject bishop = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = bishop.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = bishop.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 0); //if y is 0, it is white; if y is 7, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_Bishop : MetaChess_Bishop_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.Bishop; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                    CreatePiece(x, y, PieceType.Bishop, y == 0);
                 }
-                //create left middle piece (standard is queen)
+
+                // Queens
                 if (x == 3 && (y == 0 || y == 7))
                 {
-                    GameObject queen = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = queen.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = queen.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 0); //if y is 0, it is white; if y is 7, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_Queen : MetaChess_Queen_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.Queen; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                    CreatePiece(x, y, PieceType.Queen, y == 0);
                 }
-                //create king
+
+                // Kings
                 if (x == 4 && (y == 0 || y == 7))
                 {
-                    GameObject king = Instantiate(piecePrefab, new Vector3(x, y, -0.1f), Quaternion.identity);
-                    Piece pieceScript = king.GetComponent<Piece>();
-                    SpriteRenderer spriteRenderer = king.GetComponent<SpriteRenderer>();
-                    pieceScript.isWhite = (y == 0); //if y is 0, it is white; if y is 7, it is black
-                    spriteRenderer.sprite = pieceScript.isWhite ? MetaChess_King : MetaChess_King_Black;
-                    pieceScript.boardPosition = new Vector2Int(x, y);
-                    pieceScript.pieceType = PieceType.King; //ensure the piece type is set
-                    boardState[x, y] = pieceScript;
+                    CreatePiece(x, y, PieceType.King, y == 0);
                 }
             }
-
         }
+    }
+
+    void CreatePiece(int x, int y, PieceType originalType, bool isWhite)
+    {
+
+        // Load any saved replacement type (e.g., Scout instead of Pawn)
+        PieceType actualType = CustomizationSave.LoadReplacementPieceType(originalType, isWhite);
+
+        // Create piece GameObject
+        GameObject pieceGO = Instantiate(piecePrefab, pieceContainerTransform);
+        Piece pieceScript = pieceGO.GetComponent<Piece>(); //pieceScript is the piece
+        Image pieceImage = pieceGO.GetComponent<Image>();
+
+        // Assign sprite from saved customization if available
+        string savedSpriteName = CustomizationSave.LoadSpriteChoice(originalType, isWhite);
+        Sprite spriteToUse = null;
+
+        if (!string.IsNullOrEmpty(savedSpriteName))
+        {
+            spriteToUse = SpriteRegistry.GetSpriteByName(savedSpriteName);
+        }
+
+        // Fallback to default sprite
+        if (spriteToUse == null)
+        {
+            spriteToUse = GetSpriteForPiece(actualType, isWhite);
+        }
+
+        pieceImage.sprite = spriteToUse;
+
+        // Setup piece data
+        pieceScript.isWhite = isWhite;
+        pieceScript.boardPosition = new Vector2Int(x, y);
+        pieceScript.pieceType = actualType; 
+        boardState[x, y] = pieceScript;
+
+        // Position on board
+        int tileIndex = y * cols + x;
+        Transform tileTransform = tileContainerTransform.GetChild(tileIndex);
+        RectTransform tileRect = tileTransform.GetComponent<RectTransform>();
+        RectTransform pieceRect = pieceGO.GetComponent<RectTransform>();
+        pieceRect.position = new Vector3(tileRect.position.x, tileRect.position.y, -10f);
+        pieceRect.sizeDelta = tileRect.sizeDelta;
+
+    }
+
+
+
+    // Helper function to get the correct sprite for a piece type and color
+    private Sprite GetSpriteForPiece(PieceType type, bool isWhite)
+    {
+        string savedSpriteName = CustomizationSave.LoadSpriteChoice(type, isWhite);
+
+        if (!string.IsNullOrEmpty(savedSpriteName))
+        {
+            Sprite customSprite = SpriteRegistry.GetSpriteByName(savedSpriteName);
+            if (customSprite != null)
+                return customSprite;
+        }
+
+        // Fallback to default
+        switch (type)
+        {
+            case PieceType.Pawn: return isWhite ? MetaChess_Pawn : MetaChess_Pawn_Black;
+            case PieceType.Rook: return isWhite ? MetaChess_Rook : MetaChess_Rook_Black;
+            case PieceType.Knight: return isWhite ? MetaChess_Knight : MetaChess_Knight_Black;
+            case PieceType.Bishop: return isWhite ? MetaChess_Bishop : MetaChess_Bishop_Black;
+            case PieceType.Queen: return isWhite ? MetaChess_Queen : MetaChess_Queen_Black;
+            case PieceType.King: return isWhite ? MetaChess_King : MetaChess_King_Black;
+            case PieceType.Scout: return isWhite ? MetaChess_Scout : MetaChess_Scout_Black;
+
+            default: return null;
+        }
+    }
+
+    public Vector2 GetPieceAnchoredPosition(Vector2Int boardPosition)
+    {
+        GridLayoutGroup grid = tileContainerTransform.GetComponent<GridLayoutGroup>();
+
+        float cellSize = grid.cellSize.x;
+        float spacingX = grid.spacing.x;
+        float spacingY = grid.spacing.y;
+
+        int boardHeight = rows;
+
+        return new Vector2(
+            boardPosition.x * (cellSize + spacingX),
+            (boardHeight - 1 - boardPosition.y) * (cellSize + spacingY)
+        );
     }
 
     public Piece GetPieceAt(Vector2Int pos)
@@ -156,58 +247,70 @@ public class BoardManager : MonoBehaviour
             Destroy(targetPiece.gameObject); // Remove captured piece from scene
         }
 
-        // Move piece
+        // Move piece logically
         boardState[to.x, to.y] = movingPiece;
         boardState[from.x, from.y] = null;
-
         movingPiece.boardPosition = to;
-        movingPiece.transform.position = new Vector3(to.x, to.y, -0.1f);
-
-        //set piece as moved for castling and en passant
         movingPiece.hasMoved = true;
 
 
-        // Pawn promotion 
-        //TODO: make this more flexible, e.g. by showing a UI to select the promotion piece
-        if (movingPiece.pieceType == PieceType.Pawn)
+        // Move piece visually to match the tile
+        int tileIndex = to.y * cols + to.x;
+        Transform tileTransform = tileContainerTransform.GetChild(tileIndex);
+        RectTransform tileRect = tileTransform.GetComponent<RectTransform>();
+
+        RectTransform pieceRect = movingPiece.GetComponent<RectTransform>();
+        pieceRect.position = tileRect.position;
+
+        //move history 
+        bool isCapture = targetPiece != null && targetPiece.isWhite != movingPiece.isWhite;
+
+        string moveNotation = BoardManager.FormatMove(movingPiece, from, to, isCapture);
+        Sprite pieceSprite = movingPiece.GetComponent<Image>().sprite;
+
+        BoardManager.AddMoveToHistory(moveNotation, pieceSprite);
+
+
+        // Pawn and scout promotion
+        if (movingPiece.pieceType == PieceType.Pawn || movingPiece.pieceType == PieceType.Scout)
         {
-            // If white pawn reaches rank 7 (y == 7), or black pawn reaches rank 0 (y == 0)
             if ((movingPiece.isWhite && to.y == 7) || (!movingPiece.isWhite && to.y == 0))
             {
-                PromotePawn(movingPiece);
+                SoundManager.Instance.PlayPromoteSound();
+                ShowPromotionOptions(movingPiece); // Show promotion options UI
             }
         }
-        // Clear previous en passant target
-        enPassantTargetSquare = null;
 
-        // set en passant target if pawn moves two squares
-        if (movingPiece.pieceType == PieceType.Pawn)
-        {
-            int moveDistance = Mathf.Abs(to.y - from.y);
-            if (moveDistance == 2)
-            {
-                // Set en passant target square, the square the pawn passed through
-                int dir = movingPiece.isWhite ? -1 : 1;
-                enPassantTargetSquare = new Vector2Int(to.x, to.y + dir);
-            }
-        }
-        // case: en passant capture
+        // En passant capture
         if (movingPiece.pieceType == PieceType.Pawn && BoardManager.enPassantTargetSquare.HasValue && to == BoardManager.enPassantTargetSquare.Value)
         {
-            // Capture the pawn that moved two squares (it will be behind the target square)
-            int dir = movingPiece.isWhite ? -1 : 1;
-            Vector2Int capturedPawnPos = new Vector2Int(to.x, to.y + dir);
+            int dir = movingPiece.isWhite ? 1 : -1;
+            Vector2Int capturedPawnPos = new Vector2Int(to.x, to.y - dir);
 
             Piece capturedPawn = boardState[capturedPawnPos.x, capturedPawnPos.y];
             if (capturedPawn != null && capturedPawn.pieceType == PieceType.Pawn)
             {
+                SoundManager.Instance.PlayCaptureSound();
                 Destroy(capturedPawn.gameObject);
                 boardState[capturedPawnPos.x, capturedPawnPos.y] = null;
             }
         }
 
+        // Clear previous en passant target
+        enPassantTargetSquare = null;
 
-        // if king is castling, move the rook
+        // Set en passant target if pawn moves two squares
+        if (movingPiece.pieceType == PieceType.Pawn)
+        {
+            int moveDistance = Mathf.Abs(to.y - from.y);
+            if (moveDistance == 2)
+            {
+                int dir = movingPiece.isWhite ? -1 : 1;
+                enPassantTargetSquare = new Vector2Int(to.x, to.y + dir);
+            }
+        }
+
+        // Castling
         if (movingPiece.pieceType == PieceType.King && Mathf.Abs(to.x - from.x) == 2)
         {
             // King-side castling
@@ -218,7 +321,13 @@ public class BoardManager : MonoBehaviour
                 boardState[7, to.y] = null;
 
                 rook.boardPosition = new Vector2Int(5, to.y);
-                rook.transform.position = new Vector3(5, to.y, -0.1f);
+                RectTransform rookRect = rook.GetComponent<RectTransform>();
+
+                int rookTileIndex = to.y * cols + 5;
+                Transform rookTileTransform = tileContainerTransform.GetChild(rookTileIndex);
+                RectTransform rookTileRect = rookTileTransform.GetComponent<RectTransform>();
+                rookRect.position = rookTileRect.position;
+
                 rook.hasMoved = true;
             }
             // Queen-side castling
@@ -229,32 +338,91 @@ public class BoardManager : MonoBehaviour
                 boardState[0, to.y] = null;
 
                 rook.boardPosition = new Vector2Int(3, to.y);
-                rook.transform.position = new Vector3(3, to.y, -0.1f);
+                RectTransform rookRect = rook.GetComponent<RectTransform>();
+
+                int rookTileIndex = to.y * cols + 3;
+                Transform rookTileTransform = tileContainerTransform.GetChild(rookTileIndex);
+                RectTransform rookTileRect = rookTileTransform.GetComponent<RectTransform>();
+                rookRect.position = rookTileRect.position;
+
                 rook.hasMoved = true;
             }
+            SoundManager.Instance.PlayCastleSound();
         }
+
+        // After moving piece, check if move caused opponent check
+        bool isWhiteTurnNow = movingPiece.isWhite;
+        bool opponentIsWhite = !isWhiteTurnNow;
+
+        Vector2Int opponentKingSquare = BoardManager.FindKingSquare(opponentIsWhite);
+        bool opponentInCheck = BoardManager.IsSquareAttacked(opponentKingSquare, isWhiteTurnNow, BoardManager.boardState);
+
+        // Play capture sound if it was a capture and not causing check
+        if (isCapture && !opponentInCheck)
+        {
+            if (opponentInCheck)
+            {
+                SoundManager.Instance.PlayCheckSound();
+            }
+            else
+            {
+                SoundManager.Instance.PlayCaptureSound();
+
+            }
+        }
+        else
+        {
+
+            if (opponentInCheck)
+            {
+                SoundManager.Instance.PlayCheckSound();
+            }
+            else
+            {
+                SoundManager.Instance.PlayMoveSound();
+
+            }
+
+        }
+
 
     }
 
-
     //highlight legal moves for a piece
-    public GameObject moveHighlightPrefab;  
-    private List<GameObject> currentHighlights = new List<GameObject>();
+    public GameObject moveHighlightPrefab;
+    public GameObject captureHighlightPrefab;
 
+    private List<GameObject> currentHighlights = new List<GameObject>();
     public void ShowLegalMoves(Piece piece)
     {
-
         ClearHighlights();
         var pseudoLegalMoves = piece.GetLegalMoves(boardState);
         var legalMoves = BoardManager.FilterMovesThatCauseCheck(piece, pseudoLegalMoves, boardState);
 
         foreach (var move in legalMoves)
         {
-            Vector3 pos = new Vector3(move.x, move.y, 0.0f);
-            GameObject highlight = Instantiate(moveHighlightPrefab, pos, Quaternion.identity);
+            bool isCapture = BoardManager.Instance.GetPieceAt(move) != null &&
+                             BoardManager.Instance.GetPieceAt(move).isWhite != piece.isWhite;
+
+            GameObject prefabToUse = isCapture ? captureHighlightPrefab : moveHighlightPrefab;
+
+            GameObject highlight = Instantiate(prefabToUse, highlightContainerTransform);
+            RectTransform highlightRect = highlight.GetComponent<RectTransform>();
+            highlightRect.position = BoardToAnchoredPosition(move);
+            if (isCapture)
+            {
+                highlightRect.localScale = new Vector3(1.2f, 1.2f, 1f);
+                highlight.GetComponent<Image>().color = new Color32(0, 0, 0, 94);
+            }
+
+
+            highlightRect.position = BoardToAnchoredPosition(move);
+
             currentHighlights.Add(highlight);
         }
+
     }
+
 
     public void ClearHighlights()
     {
@@ -263,10 +431,18 @@ public class BoardManager : MonoBehaviour
         currentHighlights.Clear();
     }
 
-    public Vector3 BoardToWorldPosition(Vector2Int boardPos)
+    public Vector2 BoardToAnchoredPosition(Vector2Int boardPos)
     {
-        return new Vector3(boardPos.x, boardPos.y, -0.1f);
+        int tileIndex = boardPos.y * cols + boardPos.x;
+
+        Transform tileTransform = tileContainerTransform.GetChild(tileIndex);
+        RectTransform tileRect = tileTransform.GetComponent<RectTransform>();
+
+        return tileRect.position;
     }
+
+
+
 
 
     //turns
@@ -275,14 +451,19 @@ public class BoardManager : MonoBehaviour
 
     public void SwitchTurn()
     {
+        if (!gameStarted)
+            return;
         // Switch turn first
         currentTurn = currentTurn == PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+
+        // Sync isWhiteTurn for move history
+        isWhiteTurn = currentTurn == PlayerColor.White;
 
         // Determine whose king to find
         bool isWhite = currentTurn == PlayerColor.White;
         Vector2Int kingSquare = BoardManager.FindKingSquare(isWhite);
 
-        // Check if the king is in check (attacked by enemy pieces)
+        // Check if players(my) king is in check (attacked by enemy pieces)
         bool inCheck = BoardManager.IsSquareAttacked(kingSquare, !isWhite, BoardManager.boardState);
 
         //check if its gameover (checkmate or stalemate)
@@ -290,15 +471,12 @@ public class BoardManager : MonoBehaviour
         bool gameOver = BoardManager.IsCheckmateOrStalemate(isWhite, out isCheckmate);
 
         if (gameOver)
-        {
-            if (isCheckmate)
-                Debug.Log("CHECKMATE! " + currentTurn + " loses!");
-            else
-                Debug.Log("STALEMATE! Game drawn.");
-        }
-        else
-        {
-            Debug.Log("Turn switched to: " + currentTurn);
+        {   
+            string winner = isCheckmate ? (isWhite ? "White Won" : "Black Won") : "Draw";
+            string outcome = isCheckmate ? "by checkmate!" : "";
+            timerRunning = false; // Stop the timer
+            SoundManager.Instance.PlayGameOverSound();
+            gameOverUI.ShowGameOver(winner, outcome);
         }
 
     }
@@ -416,21 +594,267 @@ public class BoardManager : MonoBehaviour
         return true; // Either checkmate or stalemate
     }
 
-    private void PromotePawn(Piece pawn)
+
+    public Transform boardContainerTransform;
+
+    public float BoardToTileSize()
+    {
+        return tileContainerTransform.GetComponent<GridLayoutGroup>().cellSize.x;
+    }
+
+    // Converts mouseScreenPos (screen space), board position (Vector2Int)
+    // Works even if the board is placed anywhere in the Canvas
+    public Vector2Int ScreenPositionToBoardPosition(Vector2 mouseScreenPos)
+    {
+        Vector2 localPoint;
+        RectTransform boardRect = boardContainerTransform as RectTransform;
+
+        // Convert screen point, local point in board RectTransform
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            boardRect,
+            mouseScreenPos,
+            boardContainerTransform.GetComponentInParent<Canvas>().worldCamera,
+            out localPoint
+        );
+
+        // BoardRect pivot = (0.5, 0.5), so localPoint is centered at (0,0)
+        float tileSize = BoardToTileSize();
+
+        float boardOriginX = -boardRect.rect.width / 2f;
+        float boardOriginY = -boardRect.rect.height / 2f;
+
+        float relativeX = localPoint.x - boardOriginX;
+        float relativeY = localPoint.y - boardOriginY;
+
+        int x = Mathf.FloorToInt(relativeX / tileSize);
+        int y = Mathf.FloorToInt(relativeY / tileSize);
+
+        // Clamp result
+        x = Mathf.Clamp(x, 0, cols - 1);
+        y = Mathf.Clamp(y, 0, rows - 1);
+
+        return new Vector2Int(x, y);
+    }
+
+
+    //timer
+
+    public TMP_Text whiteTimerText;
+    public TMP_Text blackTimerText;
+
+    private bool timerRunning = true;
+    void Update()
+    {
+        if (!timerRunning) return;
+
+        if (currentTurn == PlayerColor.White)
+        {
+            blackTimerText.alpha = 0.5f;
+            whiteTimerText.alpha = 1.0f;
+            whiteTimeRemaining -= Time.deltaTime;
+            whiteTimeRemaining = Mathf.Max(whiteTimeRemaining, 0f);
+        }
+        else
+        {   
+            whiteTimerText.alpha = 0.5f;
+            blackTimerText.alpha = 1.0f;
+            blackTimeRemaining -= Time.deltaTime;
+            blackTimeRemaining = Mathf.Max(blackTimeRemaining, 0f);
+        }
+
+        UpdateTimerUI();
+
+        // Check for timeout
+        //black wins
+        if (whiteTimeRemaining <= 0f)
+        {
+            timerRunning = false;
+            bool gameOver = true;
+
+            if (gameOver)
+            {
+                string winner = "Black Won";
+                string outcome = "on time!";
+                SoundManager.Instance.PlayGameOverSound();
+                gameOverUI.ShowGameOver(winner, outcome);
+            }
+        }
+        //white wins
+        else if (blackTimeRemaining <= 0f)
+        {
+            timerRunning = false;
+            bool gameOver = true;
+
+            if (gameOver)
+            {
+                string winner = "White Won";
+                string outcome = "on time";
+                SoundManager.Instance.PlayGameOverSound();
+                gameOverUI.ShowGameOver(winner, outcome);
+            }
+        }
+    }
+    void UpdateTimerUI()
+    {
+        whiteTimerText.text = FormatTime(whiteTimeRemaining);
+        blackTimerText.text = FormatTime(blackTimeRemaining);
+    }
+
+    string FormatTime(float time)
+    {
+        int minutes = Mathf.FloorToInt(time / 60f);
+        int seconds = Mathf.FloorToInt(time % 60f);
+        return string.Format("{0:00}:{1:00}", minutes, seconds);
+    }
+
+
+    //move history 
+    public static List<MovePair> moveHistory = new List<MovePair>();
+    public static bool isWhiteTurn = true;
+
+    public static string BoardPositionToAlgebraic(Vector2Int pos)
+    {
+        char file = (char)('a' + pos.x);
+        char rank = (char)('1' + pos.y);
+        return $"{file}{rank}";
+    }
+
+    public static string FormatMove(Piece movingPiece, Vector2Int from, Vector2Int to, bool isCapture)
+    {
+        string pieceLetter = "";
+
+        switch (movingPiece.pieceType)
+        {
+            case PieceType.King: pieceLetter = "K"; break;
+            case PieceType.Queen: pieceLetter = "Q"; break;
+            case PieceType.Rook: pieceLetter = "R"; break;
+            case PieceType.Bishop: pieceLetter = "B"; break;
+            case PieceType.Knight: pieceLetter = "N"; break;
+            case PieceType.Pawn: pieceLetter = ""; break;
+        }
+
+        string move = "";
+
+        if (movingPiece.pieceType == PieceType.Pawn && isCapture)
+        {
+            char fromFile = (char)('a' + from.x);
+            move = $"{fromFile}x{BoardPositionToAlgebraic(to)}";
+        }
+        else if (isCapture)
+        {
+            move = $"{pieceLetter}x{BoardPositionToAlgebraic(to)}";
+        }
+        else
+        {
+            move = $"{pieceLetter}{BoardPositionToAlgebraic(to)}";
+        }
+
+        return move;
+    }
+
+    public static void AddMoveToHistory(string moveNotation, Sprite pieceSprite)
+    {
+        if (isWhiteTurn)
+        {
+            MovePair newPair = new MovePair();
+            newPair.whiteMove = moveNotation;
+            newPair.whitePieceSprite = pieceSprite;
+            moveHistory.Add(newPair);
+        }
+        else
+        {
+            moveHistory[moveHistory.Count - 1].blackMove = moveNotation;
+            moveHistory[moveHistory.Count - 1].blackPieceSprite = pieceSprite;
+        }
+
+
+        FindFirstObjectByType<MoveHistoryUI>().UpdateMoveHistoryUI();
+    }
+
+    [System.Serializable] 
+    public class MovePair
+    {
+        public string whiteMove;
+        public Sprite whitePieceSprite;
+
+        public string blackMove;
+        public Sprite blackPieceSprite;
+    }
+
+
+    [SerializeField] GameObject promotionChoicePanelPrefab;
+    private GameObject currentPromotionPanel;
+
+    private void ShowPromotionOptions(Piece pawn)
+    {
+        // Clean up old panel
+        if (currentPromotionPanel != null)
+            Destroy(currentPromotionPanel);
+
+        Vector2Int boardPos = pawn.boardPosition;
+        bool isWhite = pawn.isWhite;
+
+        // Get world position of the tile where pawn was promoted
+        int tileIndex = boardPos.y * 8 + boardPos.x;
+        Transform tile = BoardManager.Instance.tileContainerTransform.GetChild(tileIndex);
+
+        // Spawn UI panel at tile position
+        currentPromotionPanel = Instantiate(promotionChoicePanelPrefab, boardContainerTransform);
+
+        // Position it above the tile
+        RectTransform panelRect = currentPromotionPanel.GetComponent<RectTransform>();
+        RectTransform tileRect = tile.GetComponent<RectTransform>();
+
+        panelRect.position = tileRect.position + new Vector3(0, tileRect.rect.height / 2 - panelRect.rect.height / 2, 0);
+
+        Button[] buttons = currentPromotionPanel.GetComponentsInChildren<Button>();
+
+        PieceType[] types = new PieceType[]
+        {
+            PieceType.Queen,
+            PieceType.Rook,
+            PieceType.Bishop,
+            PieceType.Knight
+        };
+
+        for (int i = 0; i < buttons.Length && i < types.Length; i++)
+        {
+            Button button = buttons[i];
+            PieceType type = types[i];
+            PieceType newType = CustomizationSave.LoadReplacementPieceType(type, isWhite);
+            string spriteName = CustomizationSave.LoadSpriteChoice(type, isWhite);
+            Sprite customSprite = SpriteRegistry.GetSpriteByName(spriteName);
+
+
+            Image image = button.GetComponentInChildren<Image>();
+            image.sprite = customSprite;
+
+
+            // For now just print, later you can apply promotion
+            button.onClick.AddListener(() => Promote(pawn, newType, customSprite));
+            button.onClick.AddListener(() => Destroy(currentPromotionPanel));
+
+
+        }
+
+
+
+
+    }
+
+    private void Promote(Piece pawn, PieceType type, Sprite newPieceSprite)
     {
         // Auto promote to Queen (simple version)
-        pawn.pieceType = PieceType.Queen;
+        pawn.pieceType = type;
 
         // Change sprite
-        SpriteRenderer sr = pawn.GetComponent<SpriteRenderer>();
-        sr.sprite = pawn.isWhite ? MetaChess_Queen : MetaChess_Queen_Black;
-
-    }
-    
-    private void Castle(Piece king)
-    {
+        Image sr = pawn.GetComponent<Image>();
+        sr.sprite = newPieceSprite;
 
     }
 
-        
+
+
+
+
 }

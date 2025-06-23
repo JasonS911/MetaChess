@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bababebc596a0b40bbfa690eb29b9b4, type: 3}
+  m_Name: RookReplacements
+  m_EditorClassIdentifier: 
+  pieceType: 3
+  replacementOptions:
+  - displayName: Rook
+    blackSprite: {fileID: 21300000, guid: 889422008ed9b9648aac0f70a4985555, type: 3}
+    whiteSprite: {fileID: 21300000, guid: 2cf74873dd4d9ac41b75f4bb9bfd53bb, type: 3}
+    resultingType: 3
+  - displayName: Sumo
+    blackSprite: {fileID: 21300000, guid: f202b41aa7b803b4c9fce8f110ee4fb8, type: 3}
+    whiteSprite: {fileID: 21300000, guid: 2deca7111753a0345b38e6499b9746ad, type: 3}
+    resultingType: 8

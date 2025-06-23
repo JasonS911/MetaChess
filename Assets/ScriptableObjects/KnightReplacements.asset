@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bababebc596a0b40bbfa690eb29b9b4, type: 3}
+  m_Name: KnightReplacements
+  m_EditorClassIdentifier: 
+  pieceType: 1
+  replacementOptions:
+  - displayName: Knight
+    blackSprite: {fileID: 21300000, guid: 7fa46be632e28dd4d966cb431dde3b48, type: 3}
+    whiteSprite: {fileID: 21300000, guid: b42b323a856a9bd489f1ecdadbad1dfd, type: 3}
+    resultingType: 1
+  - displayName: Dragonfly
+    blackSprite: {fileID: 21300000, guid: 85aa838d220195941937f11f2972e202, type: 3}
+    whiteSprite: {fileID: 21300000, guid: a8198d771469afa4c99cc71e065075f6, type: 3}
+    resultingType: 7

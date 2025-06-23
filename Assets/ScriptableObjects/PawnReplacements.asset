@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bababebc596a0b40bbfa690eb29b9b4, type: 3}
+  m_Name: PawnReplacements
+  m_EditorClassIdentifier: 
+  pieceType: 0
+  replacementOptions:
+  - displayName: Pawn
+    blackSprite: {fileID: 21300000, guid: faa0bc72bae0d4e4d88c5afa2ab344e9, type: 3}
+    whiteSprite: {fileID: 21300000, guid: f653608b260ae0743945d61fc8771955, type: 3}
+    resultingType: 0
+  - displayName: Scout
+    blackSprite: {fileID: 21300000, guid: eac241a9ca9bb4d438eaaedf9ac34f02, type: 3}
+    whiteSprite: {fileID: 21300000, guid: 7d321ddf329c5dc4e927d7a0e6c8d454, type: 3}
+    resultingType: 6
