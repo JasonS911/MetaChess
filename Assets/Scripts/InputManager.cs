@@ -27,6 +27,9 @@ public class InputManager : MonoBehaviour, PlayerControls.IPlayerActions
     private bool clickHeld = false;
     private readonly float clickThreshold = 0.05f;
 
+
+    public static bool isPromotionPanelOpen = false;
+
     void Awake()
     {
         controls = new PlayerControls();
@@ -40,6 +43,7 @@ public class InputManager : MonoBehaviour, PlayerControls.IPlayerActions
 
     void LateUpdate()
     {
+        if (isPromotionPanelOpen) return; 
         if (clickHeld && !isDragging && selectedPiece != null)
         {
             float heldTime = Time.time - clickStartTime;
@@ -63,6 +67,8 @@ public class InputManager : MonoBehaviour, PlayerControls.IPlayerActions
 
     public void OnClick(InputAction.CallbackContext context)
     {
+        if (isPromotionPanelOpen) return;
+
         Vector2Int boardClick = BoardManager.Instance.ScreenPositionToBoardPosition(mouseScreenPos);
 
         if (context.started)

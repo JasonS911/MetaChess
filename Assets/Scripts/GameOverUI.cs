@@ -22,9 +22,10 @@ public class GameOverUI : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name); // or custom restart logic
     }
 
-    public void OnRematchButton()
-    {
-        // Implement rematch logic if multiplayer, or same as new game
-        OnNewGameButton();
-    }
+    //public void OnRematchButton()
+    //{
+        
+    //}
+
+
 }

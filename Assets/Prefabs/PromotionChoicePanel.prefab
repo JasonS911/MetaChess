@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 490085833557568116}
   - component: {fileID: 7922503267445473227}
   - component: {fileID: 8413920578017190153}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 50}
+  m_SizeDelta: {x: 0, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7863937227006945595
 CanvasRenderer:
@@ -152,7 +152,7 @@ GameObject:
   - component: {fileID: 2190391936600142284}
   - component: {fileID: 2890047678932391851}
   - component: {fileID: 8524999172413103744}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228,7 +228,7 @@ GameObject:
   - component: {fileID: 6021077146102512097}
   - component: {fileID: 4022749464443911417}
   - component: {fileID: 7475151856766462365}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Choice4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -339,7 +339,7 @@ GameObject:
   - component: {fileID: 6628545234192407646}
   - component: {fileID: 9081387805647681258}
   - component: {fileID: 3488769467058944627}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Choice3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -449,7 +449,7 @@ GameObject:
   - component: {fileID: 4022739332671620599}
   - component: {fileID: 6580633715789402965}
   - component: {fileID: 1751814903737586012}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -526,7 +526,7 @@ GameObject:
   - component: {fileID: 7317182704756791722}
   - component: {fileID: 1513904947304437759}
   - component: {fileID: 7247441662465343995}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: PromotionChoicePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -646,7 +646,7 @@ GameObject:
   - component: {fileID: 1644945681060056988}
   - component: {fileID: 5463286006138513402}
   - component: {fileID: 8139795982959470076}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -721,7 +721,7 @@ GameObject:
   - component: {fileID: 5092512558909250164}
   - component: {fileID: 5820490940875005859}
   - component: {fileID: 169205536219204172}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -797,7 +797,7 @@ GameObject:
   - component: {fileID: 6754723909687361851}
   - component: {fileID: 200884264535752535}
   - component: {fileID: 6893684470619557423}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Choice1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -908,7 +908,7 @@ GameObject:
   - component: {fileID: 1425804022205755954}
   - component: {fileID: 4134595386697210277}
   - component: {fileID: 7859087326493642236}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Choice2
   m_TagString: Untagged
   m_Icon: {fileID: 0}

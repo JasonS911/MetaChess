@@ -628,7 +628,7 @@ public class Piece : MonoBehaviour
             Vector2Int rookPosKingside = new Vector2Int(7, boardPosition.y);
             Piece rookKingside = board[rookPosKingside.x, rookPosKingside.y];
 
-            if (rookKingside != null && rookKingside.pieceType == PieceType.Rook && !rookKingside.hasMoved)
+            if (rookKingside != null && (rookKingside.pieceType == PieceType.Rook || rookKingside.pieceType == PieceType.Sumo) && !rookKingside.hasMoved)
             {
                 // Squares between king and rook must be empty
                 if (board[5, boardPosition.y] == null && board[6, boardPosition.y] == null)
@@ -647,7 +647,7 @@ public class Piece : MonoBehaviour
             Vector2Int rookPosQueenside = new Vector2Int(0, boardPosition.y);
             Piece rookQueenside = board[rookPosQueenside.x, rookPosQueenside.y];
 
-            if (rookQueenside != null && rookQueenside.pieceType == PieceType.Rook && !rookQueenside.hasMoved)
+            if (rookQueenside != null && (rookQueenside.pieceType == PieceType.Rook || rookQueenside.pieceType == PieceType.Sumo) && !rookQueenside.hasMoved)
             {
                 // Squares between king and rook must be empty
                 if (board[1, boardPosition.y] == null && board[2, boardPosition.y] == null && board[3, boardPosition.y] == null)

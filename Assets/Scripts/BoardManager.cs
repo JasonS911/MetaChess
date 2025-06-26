@@ -51,6 +51,7 @@ public class BoardManager : MonoBehaviour
     public float blackTimeRemaining;
     private bool gameStarted = false;
 
+    public bool gameOver = false;
     IEnumerator Start()
     {
 
@@ -67,6 +68,50 @@ public class BoardManager : MonoBehaviour
         whiteTimeRemaining = startingTime;
         blackTimeRemaining = startingTime;
     }
+
+    public Transform moveHistoryContent;
+    public void ClearBoard()
+    {
+        foreach (Transform piece in pieceContainerTransform)
+        {
+            Destroy(piece.gameObject);
+        }
+
+        foreach (Transform moveHistory in moveHistoryContent)
+        {
+            Destroy(moveHistory.gameObject);
+        }
+        moveHistory.Clear();
+    }
+
+    //restart game
+    public void Rematch()
+    {
+        ClearBoard();
+        StartCoroutine(SetupBoard());
+        timerRunning = true;
+        isWhiteTurn = true; //for move history
+        currentTurn = PlayerColor.White; //for board move
+    }
+
+    public GameObject gameOverOverlay;
+
+    public IEnumerator SetupBoard()
+    {
+        GenerateTiles();
+        yield return null; // wait for layout
+        GeneratePieces();
+        float startingTime = GameManager.Instance.selectedTimeMinutes * 60f;
+        whiteTimeRemaining = startingTime;
+        blackTimeRemaining = startingTime;
+        if (gameOverOverlay != null)
+            gameOverOverlay.SetActive(false);
+
+        SoundManager.Instance?.PlayGameStartSound();
+    }
+
+
+
     void GenerateTiles()
     {
         foreach (Transform child in tileContainerTransform)
@@ -278,6 +323,7 @@ public class BoardManager : MonoBehaviour
             {
                 SoundManager.Instance.PlayPromoteSound();
                 ShowPromotionOptions(movingPiece); // Show promotion options UI
+                return;
             }
         }
 
@@ -323,6 +369,7 @@ public class BoardManager : MonoBehaviour
                 rook.boardPosition = new Vector2Int(5, to.y);
                 RectTransform rookRect = rook.GetComponent<RectTransform>();
 
+
                 int rookTileIndex = to.y * cols + 5;
                 Transform rookTileTransform = tileContainerTransform.GetChild(rookTileIndex);
                 RectTransform rookTileRect = rookTileTransform.GetComponent<RectTransform>();
@@ -351,11 +398,11 @@ public class BoardManager : MonoBehaviour
         }
 
         // After moving piece, check if move caused opponent check
-        bool isWhiteTurnNow = movingPiece.isWhite;
-        bool opponentIsWhite = !isWhiteTurnNow;
+        bool isWhiteTurn = movingPiece.isWhite;
+        bool opponentIsWhite = !isWhiteTurn;
 
         Vector2Int opponentKingSquare = BoardManager.FindKingSquare(opponentIsWhite);
-        bool opponentInCheck = BoardManager.IsSquareAttacked(opponentKingSquare, isWhiteTurnNow, BoardManager.boardState);
+        bool opponentInCheck = BoardManager.IsSquareAttacked(opponentKingSquare, isWhiteTurn, BoardManager.boardState);
 
         // Play capture sound if it was a capture and not causing check
         if (isCapture && !opponentInCheck)
@@ -388,13 +435,29 @@ public class BoardManager : MonoBehaviour
 
     }
 
+    //checks for check after move, used for promotion
+    public static void CheckForCheckAfterMove(bool isWhite)
+    {
+        Vector2Int kingPos = FindKingSquare(!isWhite);
+        bool opponentInCheck = IsSquareAttacked(kingPos, isWhite, boardState);
+
+        if (opponentInCheck)
+            SoundManager.Instance.PlayCheckSound();
+        else
+            SoundManager.Instance.PlayMoveSound(); 
+    }
+
+
+
     //highlight legal moves for a piece
     public GameObject moveHighlightPrefab;
     public GameObject captureHighlightPrefab;
 
     private List<GameObject> currentHighlights = new List<GameObject>();
+    public static bool showLegalMovesCheckboxOn = true;
     public void ShowLegalMoves(Piece piece)
     {
+        if (!showLegalMovesCheckboxOn) { return; }
         ClearHighlights();
         var pseudoLegalMoves = piece.GetLegalMoves(boardState);
         var legalMoves = BoardManager.FilterMovesThatCauseCheck(piece, pseudoLegalMoves, boardState);
@@ -448,7 +511,7 @@ public class BoardManager : MonoBehaviour
     //turns
     public enum PlayerColor { White, Black }
     public PlayerColor currentTurn = PlayerColor.White;
-
+    public static bool autoFlipBoard = false;
     public void SwitchTurn()
     {
         if (!gameStarted)
@@ -468,10 +531,10 @@ public class BoardManager : MonoBehaviour
 
         //check if its gameover (checkmate or stalemate)
         bool isCheckmate;
-        bool gameOver = BoardManager.IsCheckmateOrStalemate(isWhite, out isCheckmate);
+        gameOver = BoardManager.IsCheckmateOrStalemate(isWhite, out isCheckmate);
 
         if (gameOver)
-        {   
+        {
             string winner = isCheckmate ? (isWhite ? "White Won" : "Black Won") : "Draw";
             string outcome = isCheckmate ? "by checkmate!" : "";
             timerRunning = false; // Stop the timer
@@ -479,6 +542,11 @@ public class BoardManager : MonoBehaviour
             gameOverUI.ShowGameOver(winner, outcome);
         }
 
+        //flips board every turn
+        else
+        {
+            if (autoFlipBoard)FlipBoard();
+        }
     }
 
 
@@ -596,8 +664,25 @@ public class BoardManager : MonoBehaviour
 
 
     public Transform boardContainerTransform;
+    private bool isFlipped = false;
+    public Transform topBar;
+    public Transform bottomBar;
 
-    public float BoardToTileSize()
+    public void FlipBoard()
+    {
+        isFlipped = !isFlipped;
+        boardContainerTransform.rotation = isFlipped ? Quaternion.Euler(0, 0, 180) : Quaternion.identity;
+        foreach (Transform child in pieceContainerTransform)
+        {
+            child.rotation = Quaternion.identity;
+        }
+        Vector3 temp = topBar.position;
+        topBar.position = bottomBar.position;
+        bottomBar.position = temp;
+
+}
+
+public float BoardToTileSize()
     {
         return tileContainerTransform.GetComponent<GridLayoutGroup>().cellSize.x;
     }
@@ -787,10 +872,13 @@ public class BoardManager : MonoBehaviour
 
     private void ShowPromotionOptions(Piece pawn)
     {
+
+        //switch turn again to ovverride first switch turn upon move
+        SwitchTurn();
         // Clean up old panel
         if (currentPromotionPanel != null)
             Destroy(currentPromotionPanel);
-
+        InputManager.isPromotionPanelOpen = true;
         Vector2Int boardPos = pawn.boardPosition;
         bool isWhite = pawn.isWhite;
 
@@ -805,7 +893,13 @@ public class BoardManager : MonoBehaviour
         RectTransform panelRect = currentPromotionPanel.GetComponent<RectTransform>();
         RectTransform tileRect = tile.GetComponent<RectTransform>();
 
-        panelRect.position = tileRect.position + new Vector3(0, tileRect.rect.height / 2 - panelRect.rect.height / 2, 0);
+        if (isWhite)
+        {
+            panelRect.position = tileRect.position + new Vector3(0, tileRect.rect.height / 2, 0);
+        } else {
+            panelRect.position = tileRect.position + new Vector3(0, tileRect.rect.height + tileRect.rect.height * 3, 0);
+
+        }
 
         Button[] buttons = currentPromotionPanel.GetComponentsInChildren<Button>();
 
@@ -850,6 +944,10 @@ public class BoardManager : MonoBehaviour
         // Change sprite
         Image sr = pawn.GetComponent<Image>();
         sr.sprite = newPieceSprite;
+        CheckForCheckAfterMove(pawn.isWhite);
+        InputManager.isPromotionPanelOpen = false;
+        //switch turns after promotion
+        SwitchTurn();
 
     }
 
