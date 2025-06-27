@@ -2,12 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using TMPro;
-using UnityEditor.Overlays;
+//using UnityEditor.Overlays;
 using UnityEngine;
 using UnityEngine.UI;
-
+                                    
 public class BoardManager : MonoBehaviour
 {
+
+    public static bool opponentFound = false;
+
+
     public Transform tileContainerTransform;
     public Transform pieceContainerTransform;
     public Transform highlightContainerTransform;
@@ -44,6 +48,7 @@ public class BoardManager : MonoBehaviour
 
     void Awake()
     {
+
         Instance = this;
 
     }
@@ -59,14 +64,23 @@ public class BoardManager : MonoBehaviour
 
         // Wait 1 frame so GridLayoutGroup lays out tiles
         yield return null;
-
+        
         GeneratePieces();
-        float startingTime = GameManager.Instance.selectedTimeMinutes * 60f;
-        gameStarted = true;
+        UpdateTimerUI();
+        if (opponentFound)
+        {
+            float startingTime = GameSceneManager.Instance.selectedTimeMinutes * 60f;
+            gameStarted = true;
+            SoundManager.Instance.PlayGameStartSound();
+            whiteTimeRemaining = startingTime;
+            blackTimeRemaining = startingTime;
+            timerRunning = true;
+        }
+        //TODO: while waiting for opponent loading spinner
+        //else
+        //{
 
-        SoundManager.Instance.PlayGameStartSound();
-        whiteTimeRemaining = startingTime;
-        blackTimeRemaining = startingTime;
+        //}
     }
 
     public Transform moveHistoryContent;
@@ -101,7 +115,7 @@ public class BoardManager : MonoBehaviour
         GenerateTiles();
         yield return null; // wait for layout
         GeneratePieces();
-        float startingTime = GameManager.Instance.selectedTimeMinutes * 60f;
+        float startingTime = GameSceneManager.Instance.selectedTimeMinutes * 60f;
         whiteTimeRemaining = startingTime;
         blackTimeRemaining = startingTime;
         if (gameOverOverlay != null)
@@ -535,7 +549,7 @@ public class BoardManager : MonoBehaviour
 
         if (gameOver)
         {
-            string winner = isCheckmate ? (isWhite ? "White Won" : "Black Won") : "Draw";
+            string winner = isCheckmate ? (!isWhite ? "White Won" : "Black Won") : "Draw";
             string outcome = isCheckmate ? "by checkmate!" : "";
             timerRunning = false; // Stop the timer
             SoundManager.Instance.PlayGameOverSound();
@@ -727,9 +741,10 @@ public float BoardToTileSize()
     public TMP_Text whiteTimerText;
     public TMP_Text blackTimerText;
 
-    private bool timerRunning = true;
+    private bool timerRunning = false;
     void Update()
     {
+
         if (!timerRunning) return;
 
         if (currentTurn == PlayerColor.White)

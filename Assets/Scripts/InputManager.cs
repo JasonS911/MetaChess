@@ -42,8 +42,9 @@ public class InputManager : MonoBehaviour, PlayerControls.IPlayerActions
     void OnDisable() => controls.Disable();
 
     void LateUpdate()
-    {
-        if (isPromotionPanelOpen) return; 
+    {   
+        if (BoardManager.opponentFound == false) return; //no movement if in lobby
+        if (isPromotionPanelOpen) return; //no movement if pawn promoting
         if (clickHeld && !isDragging && selectedPiece != null)
         {
             float heldTime = Time.time - clickStartTime;
@@ -67,7 +68,8 @@ public class InputManager : MonoBehaviour, PlayerControls.IPlayerActions
 
     public void OnClick(InputAction.CallbackContext context)
     {
-        if (isPromotionPanelOpen) return;
+        if (BoardManager.opponentFound == false) return; //no movement if in lobby
+        if (isPromotionPanelOpen) return; //no movement if pawn promoting
 
         Vector2Int boardClick = BoardManager.Instance.ScreenPositionToBoardPosition(mouseScreenPos);
 

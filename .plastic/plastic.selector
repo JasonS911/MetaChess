@@ -1,0 +1,3 @@
+repository "MetaChess/MetaChess@2475836673193@cloud"
+  path "/"
+    smartbranch "/main/networkTest"
