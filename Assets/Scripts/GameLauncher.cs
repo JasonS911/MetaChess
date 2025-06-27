@@ -42,6 +42,7 @@ public class GameLauncher : MonoBehaviour
     //go to home scene  
     public void GoToHomeScene()
     {
+        GameManager.Instance.IsMultiplayer = false;
         BoardManager.opponentFound = false;
         SceneManager.LoadScene("HomeScene");
 

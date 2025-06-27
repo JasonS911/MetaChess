@@ -12,6 +12,8 @@ public class SteamLobbyManager : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log("SteamLobbyManager Start() called");
+
         if (!SteamManager.Initialized)
         {
             Debug.LogError("Steam is not initialized.");
@@ -21,10 +23,13 @@ public class SteamLobbyManager : MonoBehaviour
         _lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
         _gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
         _lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
-
+        if (GameManager.Instance != null)
+            Debug.Log("IsMultiplayer = " + GameManager.Instance.IsMultiplayer);
         // Auto-host if user is entering GameScene for Steam Friends Play
         if (GameManager.Instance != null && GameManager.Instance.IsMultiplayer)
         {
+            Debug.Log("Detected multiplayer mode. Hosting Steam lobby...");
+
             HostLobby();
         }
     }

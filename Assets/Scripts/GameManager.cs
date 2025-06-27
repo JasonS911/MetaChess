@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        IsMultiplayer = false;
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
